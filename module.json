@@ -1,0 +1,25 @@
+{
+  "id": "keepers-puzzle-assembler",
+  "title": "Keeper's Puzzle Assembler",
+  "description": "Slice an image into custom break patterns, hand the fragments out to Investigators as private pieces, let them trade and assemble them on a shared mat, and auto-unlock a reward Journal Entry when the puzzle is solved.",
+  "version": "1.0.0",
+  "compatibility": {
+    "minimum": "13",
+    "verified": "14"
+  },
+  "authors": [
+    {
+      "name": "zecatte"
+    }
+  ],
+  "esmodules": [
+    "scripts/main.js"
+  ],
+  "styles": [
+    "styles/keepers-puzzle.css"
+  ],
+  "socket": true,
+  "url": "https://github.com/zecatte/keepers-puzzle-assembler",
+  "manifest": "https://raw.githubusercontent.com/zecatte/keepers-puzzle-assembler/main/module.json",
+  "download": "https://raw.githubusercontent.com/zecatte/keepers-puzzle-assembler/main/keepers-puzzle-assembler.zip"
+}

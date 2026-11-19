@@ -1,0 +1,170 @@
+<div class="kpa-creator-root">
+
+  <section class="kpa-section kpa-section-top">
+    <label>Puzzle
+      <select name="puzzleSelect">
+        <option value="" {{#unless isSaved}}selected{{/unless}}>— New puzzle (unsaved) —</option>
+        {{#each puzzles}}<option value="{{id}}" {{#if selected}}selected{{/if}}>{{name}}</option>{{/each}}
+      </select>
+    </label>
+    <button type="button" data-action="newPuzzle"><i class="fa-solid fa-plus"></i> New</button>
+    {{#if isSaved}}
+      <button type="button" data-action="openBoard"><i class="fa-solid fa-table-cells"></i> Open Board</button>
+    {{/if}}
+  </section>
+
+  <section class="kpa-section">
+    <h2>1. Image &amp; Break Pattern</h2>
+    <div class="kpa-field">
+      <label>Name</label>
+      <input type="text" data-draft="name" value="{{d.name}}" placeholder="Torn Parchment">
+    </div>
+    <div class="kpa-field">
+      <label>Base image</label>
+      <div class="kpa-filerow">
+        <input type="text" data-draft="image" value="{{d.image}}" placeholder="path/to/image.webp">
+        <button type="button" data-action="pickFile" data-target="image" data-type="image" title="Browse files"><i class="fa-solid fa-file-image"></i></button>
+      </div>
+    </div>
+    <div class="kpa-grid2">
+      <div class="kpa-field">
+        <label>Break pattern</label>
+        <select data-draft="pattern">
+          {{#each patterns}}<option value="{{value}}" {{#if selected}}selected{{/if}}>{{label}}</option>{{/each}}
+        </select>
+      </div>
+      <div class="kpa-field">
+        <label>Number of pieces (2–64)</label>
+        <input type="number" data-draft="count" min="2" max="64" value="{{d.count}}">
+      </div>
+      <div class="kpa-field">
+        <label>Seed</label>
+        <div class="kpa-filerow">
+          <input type="number" data-draft="seed" value="{{d.seed}}">
+          <button type="button" data-action="randomSeed" title="New random cut"><i class="fa-solid fa-dice"></i></button>
+        </div>
+      </div>
+    </div>
+    <div class="kpa-preview-box">
+      <canvas class="kpa-preview"></canvas>
+      <div class="kpa-preview-note"></div>
+    </div>
+  </section>
+
+  <section class="kpa-section">
+    <h2>2. Assembly Rules</h2>
+    <div class="kpa-grid2">
+      <label class="kpa-check"><input type="checkbox" data-draft="allowRotation" {{#if d.allowRotation}}checked{{/if}}> Allow rotation</label>
+      <label class="kpa-check"><input type="checkbox" data-draft="scrambleRotation" {{#if d.scrambleRotation}}checked{{/if}} {{#unless d.allowRotation}}disabled{{/unless}}> Scramble starting rotations</label>
+      <div class="kpa-field">
+        <label>Rotation increment</label>
+        <select data-draft="rotationStep" data-number {{#unless d.allowRotation}}disabled{{/unless}}>
+          {{#each rotationSteps}}<option value="{{value}}" {{#if selected}}selected{{/if}}>{{value}}°</option>{{/each}}
+        </select>
+      </div>
+      <div class="kpa-field">
+        <label>Snap angle tolerance (°)</label>
+        <input type="number" data-draft="snapAngle" min="1" max="45" value="{{d.snapAngle}}" {{#unless d.allowRotation}}disabled{{/unless}}>
+      </div>
+      <div class="kpa-field">
+        <label>Snap distance (px)</label>
+        <input type="number" data-draft="snapDistance" min="4" max="80" value="{{d.snapDistance}}">
+      </div>
+      <label class="kpa-check"><input type="checkbox" data-draft="showGhost" {{#if d.showGhost}}checked{{/if}}> Show a faint guide image on the mat</label>
+    </div>
+  </section>
+
+  <section class="kpa-section">
+    <h2>3. Tactile Sounds</h2>
+    <div class="kpa-field">
+      <label>Piece pick-up / move / trade</label>
+      <div class="kpa-filerow">
+        <input type="text" data-draft="sounds.pickup" value="{{d.sounds.pickup}}" placeholder="optional">
+        <button type="button" data-action="pickFile" data-target="sounds.pickup" data-type="audio"><i class="fa-solid fa-music"></i></button>
+        <button type="button" data-action="clearFile" data-target="sounds.pickup" title="Clear"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+    </div>
+    <div class="kpa-field">
+      <label>Piece snap / lock</label>
+      <div class="kpa-filerow">
+        <input type="text" data-draft="sounds.snap" value="{{d.sounds.snap}}" placeholder="optional">
+        <button type="button" data-action="pickFile" data-target="sounds.snap" data-type="audio"><i class="fa-solid fa-music"></i></button>
+        <button type="button" data-action="clearFile" data-target="sounds.snap" title="Clear"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+    </div>
+    <div class="kpa-field">
+      <label>Puzzle solved sting</label>
+      <div class="kpa-filerow">
+        <input type="text" data-draft="sounds.solved" value="{{d.sounds.solved}}" placeholder="optional">
+        <button type="button" data-action="pickFile" data-target="sounds.solved" data-type="audio"><i class="fa-solid fa-music"></i></button>
+        <button type="button" data-action="clearFile" data-target="sounds.solved" title="Clear"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+    </div>
+    <div class="kpa-field">
+      <label>Volume <span class="kpa-range-value">{{#if d.sounds.volume}}{{d.sounds.volume}}{{/if}}</span></label>
+      <input type="range" data-draft="sounds.volume" min="0" max="1" step="0.05" value="{{d.sounds.volume}}">
+    </div>
+  </section>
+
+  <section class="kpa-section">
+    <h2>4. Reward Journal Entry</h2>
+    <div class="kpa-reward-drop">
+      <select data-draft="rewardUuid">
+        <option value="">— none —</option>
+        {{#each journals}}<option value="{{value}}" {{#if selected}}selected{{/if}}>{{label}}</option>{{/each}}
+      </select>
+      {{#if d.rewardUuid}}
+        <button type="button" data-action="clearReward" title="Unlink"><i class="fa-solid fa-xmark"></i></button>
+      {{/if}}
+      <p class="kpa-note">Or drag a Journal Entry here. When the puzzle is solved it becomes visible to all players and opens on every screen.</p>
+    </div>
+  </section>
+
+  <section class="kpa-section kpa-save-row">
+    <button type="button" class="kpa-primary" data-action="saveSlice"><i class="fa-solid fa-scissors"></i> {{#if isSaved}}Save &amp; Apply{{else}}Slice &amp; Save{{/if}}</button>
+    {{#if isSaved}}
+      <p class="kpa-note">Changing image, piece count, pattern or seed re-slices the puzzle and resets the piece owners and progress.</p>
+    {{/if}}
+  </section>
+
+  {{#if isSaved}}
+    <section class="kpa-section">
+      <h2>5. Distribute Pieces ({{pieceCount}})</h2>
+      <div class="kpa-buttonrow">
+        <button type="button" data-action="distribute"><i class="fa-solid fa-shuffle"></i> Distribute randomly among active players</button>
+        <button type="button" data-action="allShared"><i class="fa-solid fa-users"></i> All to Shared Pool</button>
+        <button type="button" data-action="allKeeper"><i class="fa-solid fa-user-secret"></i> All back to Keeper</button>
+      </div>
+      <div class="kpa-piece-table">
+        {{#each rows}}
+          <div class="kpa-piece-row">
+            <span class="kpa-piece-n">{{n}}</span>
+            <img src="{{src}}" alt="Piece {{n}}">
+            {{#if onBoard}}
+              <span class="kpa-piece-status">{{#if locked}}locked in place{{else}}on the mat{{/if}}</span>
+            {{else}}
+              <select data-piece-owner="{{id}}">
+                {{#each options}}<option value="{{value}}" {{#if selected}}selected{{/if}}>{{label}}</option>{{/each}}
+              </select>
+            {{/if}}
+          </div>
+        {{/each}}
+      </div>
+    </section>
+
+    <section class="kpa-section">
+      <h2>6. Player Access</h2>
+      <div class="kpa-buttonrow">
+        <button type="button" data-action="makeHandout"><i class="fa-solid fa-scroll"></i> {{#if hasHandout}}Generate another Handout Journal{{else}}Generate Handout Journal{{/if}}</button>
+        <button type="button" data-action="makeItem"><i class="fa-solid fa-box-open"></i> {{#if hasItem}}Generate another Inventory Item{{else}}Generate Inventory Item{{/if}}</button>
+      </div>
+      <p class="kpa-note">The handout lets players open the board from a journal; the item can be dragged onto an Investigator's sheet and has an "Inspect Puzzle" button in its window header.</p>
+    </section>
+
+    <section class="kpa-section kpa-danger">
+      <button type="button" data-action="resetProgress"><i class="fa-solid fa-rotate-left"></i> Reset progress</button>
+      <button type="button" data-action="deletePuzzle"><i class="fa-solid fa-trash"></i> Delete puzzle</button>
+      {{#if completed}}<span class="kpa-solved-badge"><i class="fa-solid fa-circle-check"></i> Solved</span>{{/if}}
+    </section>
+  {{/if}}
+</div>

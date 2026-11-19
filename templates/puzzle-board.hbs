@@ -1,0 +1,117 @@
+<div class="kpa-board-root">
+  {{#if missing}}
+    <p class="kpa-missing">This puzzle no longer exists.</p>
+  {{else}}
+    <header class="kpa-toolbar">
+      <div class="kpa-title"><i class="fa-solid fa-puzzle-piece"></i> <span>{{name}}</span></div>
+      <div class="kpa-progress" title="Pieces locked into place">
+        <div class="kpa-progress-bar" style="width: {{percent}}%"></div>
+        <span>{{locked}} / {{total}} locked</span>
+      </div>
+      <div class="kpa-tools">
+        {{#if allowRotation}}
+          <span class="kpa-hint"><i class="fa-solid fa-rotate"></i> Right-click, R or wheel: rotate {{rotationStep}}°</span>
+        {{else}}
+          <span class="kpa-hint"><i class="fa-solid fa-ban"></i> Rotation disabled</span>
+        {{/if}}
+        <button type="button" data-action="zoomOut" title="Zoom out"><i class="fa-solid fa-magnifying-glass-minus"></i></button>
+        <button type="button" data-action="zoomFit" title="Fit mat to window"><i class="fa-solid fa-expand"></i></button>
+        <button type="button" data-action="zoomIn" title="Zoom in"><i class="fa-solid fa-magnifying-glass-plus"></i></button>
+        {{#if completed}}{{#if hasReward}}
+          <button type="button" data-action="openReward"><i class="fa-solid fa-book-open"></i> Open reward</button>
+        {{/if}}{{/if}}
+        {{#if isGM}}
+          <button type="button" data-action="openCreator"><i class="fa-solid fa-gear"></i> Creator</button>
+        {{/if}}
+      </div>
+    </header>
+
+    <div class="kpa-layout">
+      <aside class="kpa-trays">
+        <section class="kpa-tray kpa-tray-private" data-tray="private">
+          <h3><i class="fa-solid fa-lock"></i> My Pieces <small>(only you can see these)</small></h3>
+          <div class="kpa-tray-pieces">
+            {{#each myPieces}}
+              <div class="kpa-piece kpa-tray-piece" data-piece-id="{{id}}" style="width: {{tw}}px; height: {{th}}px" title="Drag onto the mat. Right-click to give or share.">
+                <img src="{{src}}" draggable="false" alt="Fragment">
+                <div class="kpa-piece-controls">
+                  <button type="button" data-action="giveMenu" title="Give to a specific Investigator"><i class="fa-solid fa-hand-holding-hand"></i></button>
+                  <button type="button" data-action="sharePiece" title="Share with everyone (Party Pool)"><i class="fa-solid fa-users"></i></button>
+                </div>
+              </div>
+            {{else}}
+              <p class="kpa-empty">Nothing in your hands.</p>
+            {{/each}}
+          </div>
+        </section>
+
+        <section class="kpa-tray kpa-tray-shared" data-tray="shared">
+          <h3><i class="fa-solid fa-users"></i> Shared Party Tray</h3>
+          <div class="kpa-tray-pieces">
+            {{#each sharedPieces}}
+              <div class="kpa-piece kpa-tray-piece" data-piece-id="{{id}}" style="width: {{tw}}px; height: {{th}}px" title="Everyone can see and use this fragment.">
+                <img src="{{src}}" draggable="false" alt="Fragment">
+                <div class="kpa-piece-controls">
+                  <button type="button" data-action="takePiece" title="Take into My Pieces"><i class="fa-solid fa-hand"></i></button>
+                </div>
+              </div>
+            {{else}}
+              <p class="kpa-empty">No shared fragments.</p>
+            {{/each}}
+          </div>
+          {{#if holders.length}}
+            <ul class="kpa-holders">
+              {{#each holders}}
+                <li class="kpa-holder"><i class="fa-solid fa-eye-slash"></i> {{name}} holds {{count}} unrevealed fragment{{#if plural}}s{{/if}}</li>
+              {{/each}}
+            </ul>
+          {{/if}}
+        </section>
+
+        {{#if isGM}}
+          <section class="kpa-tray kpa-tray-gm">
+            <h3><i class="fa-solid fa-eye"></i> Keeper Overview</h3>
+            {{#each overview}}
+              <div class="kpa-gm-group">
+                <h4>{{name}} <small>({{pieces.length}})</small></h4>
+                <div class="kpa-tray-pieces">
+                  {{#each pieces}}
+                    <div class="kpa-piece kpa-tray-piece" data-piece-id="{{id}}" style="width: {{tw}}px; height: {{th}}px">
+                      <img src="{{src}}" draggable="false" alt="Fragment">
+                      <div class="kpa-piece-controls">
+                        <button type="button" data-action="giveMenu" title="Reassign to a player"><i class="fa-solid fa-hand-holding-hand"></i></button>
+                        <button type="button" data-action="sharePiece" title="Move to the Party Pool"><i class="fa-solid fa-users"></i></button>
+                      </div>
+                    </div>
+                  {{/each}}
+                </div>
+              </div>
+            {{else}}
+              <p class="kpa-empty">No other fragments are being held.</p>
+            {{/each}}
+          </section>
+        {{/if}}
+      </aside>
+
+      <div class="kpa-mat-wrap" data-drop="mat">
+        <div class="kpa-mat-sizer" style="width: {{sizerW}}px; height: {{sizerH}}px">
+          <div class="kpa-mat {{#if completed}}kpa-solved{{/if}}" style="width: {{matW}}px; height: {{matH}}px; transform: scale({{zoom}})">
+            <div class="kpa-frame" style="left: {{frame.left}}px; top: {{frame.top}}px; width: {{frame.w}}px; height: {{frame.h}}px">
+              {{#if showGhost}}<img class="kpa-ghost-img" src="{{imageUrl}}" draggable="false" alt="">{{/if}}
+            </div>
+            {{#each boardPieces}}
+              <div class="kpa-piece kpa-mat-piece {{#if locked}}kpa-locked{{/if}}" data-piece-id="{{id}}"
+                   style="left: {{left}}px; top: {{top}}px; width: {{w}}px; height: {{h}}px; transform: rotate({{rotation}}deg)">
+                <img src="{{src}}" draggable="false" alt="Fragment">
+              </div>
+            {{/each}}
+            {{#if completed}}
+              <img class="kpa-assembled" src="{{imageUrl}}" draggable="false" alt="Solved"
+                   style="left: {{frame.left}}px; top: {{frame.top}}px; width: {{frame.w}}px; height: {{frame.h}}px">
+            {{/if}}
+          </div>
+        </div>
+      </div>
+    </div>
+  {{/if}}
+</div>
