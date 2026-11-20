@@ -11,7 +11,8 @@ export const PATTERNS = [
   { value: "grid", label: "Standard Grid" },
   { value: "bsp", label: "Random-Sized Rectangles" },
   { value: "torn", label: "Torn Document / Jagged Paper" },
-  { value: "voronoi", label: "Shattered / Voronoi Shards" }
+  { value: "voronoi", label: "Shattered / Voronoi Shards" },
+  { value: "tornshards", label: "Torn Shards (Voronoi + Mixed Tear Edges)" }
 ];
 
 /* ------------------------------------------------------------------ */
@@ -256,6 +257,101 @@ function voronoiPolys(n, W, H, rng) {
   return voronoiCells(pts, W, H).filter(p => p.length >= 3);
 }
 
+/**
+ * Voronoi layout with irregular piece sizes, where every shared edge is replaced by its own
+ * tear: ragged, wavy, stepped (notched) or sawtooth, each with a random amplitude and grain.
+ * Both neighbours build the edge from the same canonical points, so they fit exactly.
+ */
+function tearEdge(rng, a, b) {
+  const dx = b[0] - a[0];
+  const dy = b[1] - a[1];
+  const len = Math.hypot(dx, dy);
+  if (len < 8) return [];
+  const nx = -dy / len;
+  const ny = dx / len;
+  const amp = Math.min(14, len * (0.04 + rng() * 0.1));
+  const step = 3 + rng() * 6;
+  const m = Math.max(3, Math.ceil(len / step));
+  const type = Math.floor(rng() * 4);
+  const offs = []; // [t, offset]
+  if (type === 0) { // ragged
+    const ser = roughSeries(rng, m + 1, amp);
+    ser.forEach((o, i) => offs.push([i / m, o]));
+  } else if (type === 1) { // wavy with light fibre noise
+    const waves = 1 + rng() * 3;
+    const ph = rng() * 6.28;
+    for (let i = 0; i <= m; i++) {
+      const t = i / m;
+      offs.push([t, Math.sin(ph + t * waves * 6.283) * amp * Math.sin(t * Math.PI) + (rng() - 0.5) * amp * 0.25 * (i > 0 && i < m)]);
+    }
+  } else if (type === 2) { // stepped notches
+    const k = 3 + Math.floor(rng() * 6);
+    const ts = [0];
+    for (let i = 1; i < k; i++) ts.push(i / k + (rng() - 0.5) * 0.5 / k);
+    ts.push(1);
+    ts.sort((u, v) => u - v);
+    for (let i = 0; i < ts.length - 1; i++) {
+      const o = i === 0 || i === ts.length - 2 ? 0 : (rng() * 2 - 1) * amp;
+      offs.push([ts[i], o], [ts[i + 1], o]);
+    }
+  } else { // sawtooth
+    const teeth = 3 + Math.floor(rng() * 7);
+    for (let i = 0; i <= teeth; i++) {
+      const t = i / teeth;
+      const edgeFade = i === 0 || i === teeth ? 0 : 1;
+      offs.push([t, (i % 2 ? 1 : -1) * amp * edgeFade * (0.6 + rng() * 0.4)]);
+    }
+  }
+  offs[0][1] = 0;
+  offs[offs.length - 1][1] = 0;
+  return offs.map(([t, o]) => [a[0] + dx * t + nx * o, a[1] + dy * t + ny * o]);
+}
+
+function tornShardPolys(n, W, H, rng, seed) {
+  const cols = Math.max(1, Math.ceil(Math.sqrt((n * W) / H)));
+  const rows = Math.max(1, Math.ceil(n / cols));
+  const cw = W / cols;
+  const ch = H / rows;
+  const cells = [];
+  for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) cells.push([r, c]);
+  shuffle(cells, rng);
+  const pts = cells.slice(0, n).map(([r, c]) => [(c + 0.5 + (rng() - 0.5) * 1.1) * cw, (r + 0.5 + (rng() - 0.5) * 1.1) * ch]
+    .map((v, k) => Math.min(k ? H : W, Math.max(0, v))));
+  const polys = voronoiCells(pts, W, H).filter(p => p.length >= 3);
+  const key = (a, b) => {
+    const ka = `${Math.round(a[0] * 5)},${Math.round(a[1] * 5)}`;
+    const kb = `${Math.round(b[0] * 5)},${Math.round(b[1] * 5)}`;
+    return ka < kb ? `${ka}|${kb}` : `${kb}|${ka}`;
+  };
+  const count = new Map();
+  for (const poly of polys) for (let i = 0; i < poly.length; i++) {
+    const k = key(poly[i], poly[(i + 1) % poly.length]);
+    count.set(k, (count.get(k) ?? 0) + 1);
+  }
+  const cache = new Map();
+  return polys.map(poly => {
+    const out = [];
+    for (let i = 0; i < poly.length; i++) {
+      const a = poly[i];
+      const b = poly[(i + 1) % poly.length];
+      out.push(a);
+      const k = key(a, b);
+      if (count.get(k) !== 2) continue; // outer border stays straight
+      const forward = `${Math.round(a[0] * 5)},${Math.round(a[1] * 5)}` < `${Math.round(b[0] * 5)},${Math.round(b[1] * 5)}`;
+      if (!cache.has(k)) {
+        const [ca, cb] = forward ? [a, b] : [b, a];
+        let h = (Number(seed) || 1) >>> 0;
+        for (const ch2 of k) h = Math.imul(h ^ ch2.charCodeAt(0), 16777619) >>> 0;
+        cache.set(k, tearEdge(makeRng(h), ca, cb));
+      }
+      const pts2 = cache.get(k);
+      const mid = pts2.slice(1, -1);
+      out.push(...(forward ? mid : mid.slice().reverse()));
+    }
+    return out;
+  });
+}
+
 /* ------------------------------------------------------------------ */
 /*  Public slicing API                                                 */
 /* ------------------------------------------------------------------ */
@@ -272,6 +368,7 @@ export function slicePuzzle({ pattern, count, width, height, seed }) {
     case "bsp": polys = bspPolys(n, width, height, rng); break;
     case "torn": polys = tornPolys(n, width, height, rng); break;
     case "voronoi": polys = voronoiPolys(n, width, height, rng); break;
+    case "tornshards": polys = tornShardPolys(n, width, height, rng, seed); break;
     default: polys = gridPolys(n, width, height);
   }
   const clamp = (v, max) => Math.round(Math.min(max, Math.max(0, v)) * 10) / 10;
@@ -328,7 +425,7 @@ export async function renderPieceTextures(img, pieces, width, height, pattern = 
     tracePolygon(ctx, p.polygon, x, y);
     ctx.clip();
     ctx.drawImage(img, -x, -y, width, height);
-    if (pattern === "torn") {
+    if (pattern === "torn" || pattern === "tornshards") {
       // pale fibrous paper edge
       ctx.lineWidth = 5;
       ctx.strokeStyle = "rgba(245,235,215,0.35)";

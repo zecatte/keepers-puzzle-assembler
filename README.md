@@ -1,6 +1,6 @@
 # Keeper's Puzzle Assembler (keepers-puzzle-assembler)
 
-Foundry VTT v13-v14 module for investigative games. The Keeper slices an image (Grid, Random Rectangles, Torn Paper, Voronoi Shards), hands fragments to Investigators as private pieces, and players trade and assemble them on a shared mat. Solving the puzzle unlocks and opens a reward Journal Entry for everyone.
+Foundry VTT v13-v14 module for investigative games. The Keeper slices an image (Grid, Random Rectangles, Torn Paper, Voronoi Shards, Torn Shards), hands fragments to Investigators as private pieces, and players trade and assemble them on a shared mat. Solving the puzzle unlocks and opens a reward Journal Entry for everyone.
 
 ## Install
 1. Put this folder in `Data/modules/keepers-puzzle-assembler/` (or install from a manifest URL once hosted), restart Foundry.
