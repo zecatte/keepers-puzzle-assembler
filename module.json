@@ -2,7 +2,7 @@
   "id": "keepers-puzzle-assembler",
   "title": "Keeper's Puzzle Assembler",
   "description": "Slice an image into custom break patterns, hand the fragments out to Investigators as private pieces, let them trade and assemble them on a shared mat, and auto-unlock a reward Journal Entry when the puzzle is solved.",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "compatibility": {
     "minimum": "13",
     "verified": "14"

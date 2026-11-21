@@ -502,11 +502,6 @@ export class PuzzleManager {
     if (!root?.querySelectorAll) return;
     for (const box of root.querySelectorAll(".kpa-handout[data-puzzle-id]")) {
       const puzzleId = box.dataset.puzzleId;
-      box.querySelectorAll(".kpa-open").forEach(btn => {
-        if (btn.dataset.kpaBound) return;
-        btn.dataset.kpaBound = "1";
-        btn.addEventListener("click", ev => { ev.preventDefault(); this.openBoardFn?.(puzzleId); });
-      });
       const target = box.querySelector(".kpa-fragments");
       if (!target) continue;
       const pz = this.getPuzzle(puzzleId);

@@ -22,6 +22,27 @@ Hooks.once("init", () => {
 Hooks.once("ready", () => {
   PuzzleManager.openBoardFn = id => PuzzleBoard.open(id);
   game.socket.on(SOCKET, msg => PuzzleManager.onSocket(msg));
+
+  // Delegated click handling: works however or whenever the journal page HTML was rendered.
+  document.addEventListener("click", ev => {
+    const btn = ev.target.closest?.(".kpa-open, [data-kpa-open], .kpa-handout button[data-puzzle-id], .kpa-handout a[data-puzzle-id]");
+    if (!btn) return;
+    const id = btn.dataset.puzzleId || btn.dataset.kpaOpen || btn.closest("[data-puzzle-id]")?.dataset.puzzleId;
+    if (!id) return;
+    ev.preventDefault();
+    ev.stopPropagation();
+    PuzzleBoard.open(id);
+  }, true);
+
+  // Fill in per-viewer thumbnails whenever a handout appears in the DOM (also after page changes).
+  const observer = new MutationObserver(muts => {
+    for (const m of muts) for (const n of m.addedNodes) {
+      if (!(n instanceof HTMLElement)) continue;
+      const root = n.matches(".kpa-handout") ? n.parentElement : n.querySelector?.(".kpa-handout") ? n : null;
+      if (root) PuzzleManager.decorateHandout(root);
+    }
+  });
+  observer.observe(document.body, { childList: true, subtree: true });
   const mod = game.modules.get(MODULE_ID);
   if (mod) {
     mod.api = {
